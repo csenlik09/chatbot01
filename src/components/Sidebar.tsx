@@ -14,6 +14,7 @@ interface Props {
   onNewChat: (projectId: string | null) => void;
   onOpenSettings: () => void;
   onOpenProjectInstructions: (projectId: string) => void;
+  onProjectSelect: (projectId: string | null) => void;
 }
 
 export default function Sidebar({
@@ -24,12 +25,15 @@ export default function Sidebar({
   onNewChat,
   onOpenSettings,
   onOpenProjectInstructions,
+  onProjectSelect,
 }: Props) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [projectMenuOpen, setProjectMenuOpen] = useState<string | null>(null);
   const [chatMenuOpen, setChatMenuOpen] = useState<string | null>(null);
+  const [moveMenuOpen, setMoveMenuOpen] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -57,8 +61,19 @@ export default function Sidebar({
   function toggleProject(id: string) {
     setExpandedProjects((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+        // If collapsing the selected project, clear selection
+        if (selectedProjectId === id) {
+          setSelectedProjectId(null);
+          onProjectSelect(null);
+        }
+      } else {
+        next.add(id);
+        // Expanding a project selects it
+        setSelectedProjectId(id);
+        onProjectSelect(id);
+      }
       return next;
     });
   }
@@ -78,6 +93,10 @@ export default function Sidebar({
     if (!confirm('Delete this project? Chats will be ungrouped.')) return;
     await fetch(`/api/projects/${id}`, { method: 'DELETE' });
     setProjectMenuOpen(null);
+    if (selectedProjectId === id) {
+      setSelectedProjectId(null);
+      onProjectSelect(null);
+    }
     refresh();
   }
 
@@ -86,6 +105,48 @@ export default function Sidebar({
     await fetch(`/api/conversations/${id}`, { method: 'DELETE' });
     setChatMenuOpen(null);
     refresh();
+  }
+
+  async function handleMoveChat(chatId: string, targetProjectId: string | null) {
+    await fetch(`/api/conversations/${chatId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: targetProjectId }),
+    });
+    setChatMenuOpen(null);
+    setMoveMenuOpen(null);
+    refresh();
+  }
+
+  function renderChatMenu(convId: string, currentProjectId: string | null) {
+    if (chatMenuOpen !== convId) return null;
+
+    return (
+      <div className={styles.menu}>
+        <button
+          onClick={() => setMoveMenuOpen(moveMenuOpen === convId ? null : convId)}
+        >
+          Move to...
+        </button>
+        {moveMenuOpen === convId && (
+          <div className={styles.submenu}>
+            {currentProjectId !== null && (
+              <button onClick={() => handleMoveChat(convId, null)}>
+                No Project
+              </button>
+            )}
+            {projects
+              .filter((p) => p.id !== currentProjectId)
+              .map((p) => (
+                <button key={p.id} onClick={() => handleMoveChat(convId, p.id)}>
+                  {p.name}
+                </button>
+              ))}
+          </div>
+        )}
+        <button onClick={() => handleDeleteChat(convId)}>Delete</button>
+      </div>
+    );
   }
 
   return (
@@ -102,7 +163,7 @@ export default function Sidebar({
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
           </button>
-          <button className={styles.newChatButton} onClick={() => onNewChat(null)}>
+          <button className={styles.newChatButton} onClick={() => onNewChat(selectedProjectId)}>
             + New Chat
           </button>
         </div>
@@ -120,7 +181,7 @@ export default function Sidebar({
               <div key={project.id} className={styles.projectGroup}>
                 <div className={styles.projectRow}>
                   <button
-                    className={styles.projectName}
+                    className={`${styles.projectName} ${selectedProjectId === project.id ? styles.selectedProject : ''}`}
                     onClick={() => toggleProject(project.id)}
                   >
                     <span className={styles.arrow}>
@@ -163,15 +224,14 @@ export default function Sidebar({
                         <div className={styles.menuWrapper}>
                           <button
                             className={styles.menuButton}
-                            onClick={() => setChatMenuOpen(chatMenuOpen === conv.id ? null : conv.id)}
+                            onClick={() => {
+                              setChatMenuOpen(chatMenuOpen === conv.id ? null : conv.id);
+                              setMoveMenuOpen(null);
+                            }}
                           >
                             &hellip;
                           </button>
-                          {chatMenuOpen === conv.id && (
-                            <div className={styles.menu}>
-                              <button onClick={() => handleDeleteChat(conv.id)}>Delete</button>
-                            </div>
-                          )}
+                          {renderChatMenu(conv.id, conv.projectId)}
                         </div>
                       </div>
                     ))}
@@ -197,15 +257,14 @@ export default function Sidebar({
                 <div className={styles.menuWrapper}>
                   <button
                     className={styles.menuButton}
-                    onClick={() => setChatMenuOpen(chatMenuOpen === conv.id ? null : conv.id)}
+                    onClick={() => {
+                      setChatMenuOpen(chatMenuOpen === conv.id ? null : conv.id);
+                      setMoveMenuOpen(null);
+                    }}
                   >
                     &hellip;
                   </button>
-                  {chatMenuOpen === conv.id && (
-                    <div className={styles.menu}>
-                      <button onClick={() => handleDeleteChat(conv.id)}>Delete</button>
-                    </div>
-                  )}
+                  {renderChatMenu(conv.id, null)}
                 </div>
               </div>
             ))}

@@ -78,7 +78,7 @@ export default function SettingsPanel({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
+    <div className={styles.overlay}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h2>API Settings</h2>

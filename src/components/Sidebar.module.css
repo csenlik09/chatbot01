@@ -121,6 +121,11 @@
   background: var(--bg-secondary);
 }
 
+.selectedProject {
+  background: var(--bg-secondary);
+  color: var(--accent);
+}
+
 .arrow {
   font-size: 0.7rem;
   color: var(--text-muted);
@@ -218,6 +223,22 @@
 
 .menu button:hover {
   background: var(--bg-user-bubble);
+}
+
+.submenu {
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
+  padding-top: 2px;
+}
+
+.submenu button {
+  padding-left: 16px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.submenu button:hover {
+  color: var(--text-primary);
 }
 
 .empty {

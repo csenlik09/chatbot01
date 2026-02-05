@@ -12,6 +12,7 @@ interface Props {
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   onConversationUpdate: () => void;
+  onAutoCreateChat: () => Promise<string>;
 }
 
 export default function ChatWindow({
@@ -19,10 +20,17 @@ export default function ChatWindow({
   sidebarOpen,
   onToggleSidebar,
   onConversationUpdate,
+  onAutoCreateChat,
 }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const activeConvRef = useRef<string | null>(null);
+
+  // Keep ref in sync so handleSend always has the latest
+  useEffect(() => {
+    activeConvRef.current = conversationId;
+  }, [conversationId]);
 
   // Load messages when conversation changes
   useEffect(() => {
@@ -42,7 +50,17 @@ export default function ChatWindow({
   }, [messages, isLoading]);
 
   async function handleSend(text: string) {
-    if (!conversationId) return;
+    let convId = activeConvRef.current;
+
+    // Auto-create conversation if none exists
+    if (!convId) {
+      try {
+        convId = await onAutoCreateChat();
+        activeConvRef.current = convId;
+      } catch {
+        return;
+      }
+    }
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -57,7 +75,7 @@ export default function ChatWindow({
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, conversationId }),
+        body: JSON.stringify({ message: text, conversationId: convId }),
       });
       const data: ChatResponse = await res.json();
 
@@ -75,7 +93,6 @@ export default function ChatWindow({
         setMessages((prev) => [...prev, data.message]);
       }
 
-      // Notify parent to refresh sidebar (title may have updated)
       onConversationUpdate();
     } catch {
       setMessages((prev) => [
@@ -109,9 +126,9 @@ export default function ChatWindow({
       </header>
 
       <div className={styles.messageList}>
-        {!conversationId && (
+        {!conversationId && messages.length === 0 && (
           <div className={styles.empty}>
-            <p>Start a new chat from the sidebar.</p>
+            <p>Send a message to start a conversation.</p>
             <p className={styles.hint}>
               Configure your API settings using the gear icon in the sidebar.
             </p>
@@ -129,7 +146,7 @@ export default function ChatWindow({
         <div ref={bottomRef} />
       </div>
 
-      <InputArea onSend={handleSend} disabled={isLoading || !conversationId} />
+      <InputArea onSend={handleSend} disabled={isLoading} />
     </div>
   );
 }
