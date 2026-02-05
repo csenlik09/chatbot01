@@ -1,0 +1,21 @@
+.bubble {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.user {
+  align-self: flex-end;
+  background: var(--bg-user-bubble);
+  border-radius: 18px 18px 4px 18px;
+}
+
+.assistant {
+  align-self: flex-start;
+  background: var(--bg-assistant-bubble);
+  border-radius: 18px 18px 18px 4px;
+}
