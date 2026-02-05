@@ -22,6 +22,12 @@ export interface Project {
   updatedAt: number;
 }
 
+export interface Memory {
+  id: string;
+  content: string;
+  createdAt: number;
+}
+
 export interface ApiSettings {
   apiUrl: string;
   apiKey: string;
@@ -33,6 +39,7 @@ export interface AppData {
   settings: ApiSettings;
   projects: Project[];
   conversations: Conversation[];
+  memories: Memory[];
 }
 
 export interface ChatRequest {

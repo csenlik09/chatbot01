@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import type { AppData, Conversation, Project, Message, ApiSettings } from './types';
+import type { AppData, Conversation, Project, Message, ApiSettings, Memory } from './types';
 
 const DATA_DIR = process.env.DATA_DIR || (process.env.NODE_ENV === 'production' ? '/data' : './data');
 const DATA_FILE = path.join(DATA_DIR, 'chatbot-data.json');
@@ -31,6 +31,7 @@ function readData(): AppData {
       settings: { ...DEFAULT_SETTINGS },
       projects: [],
       conversations: [],
+      memories: [],
     };
     fs.writeFileSync(DATA_FILE, JSON.stringify(initial, null, 2));
     g.__appData = initial;
@@ -39,6 +40,10 @@ function readData(): AppData {
 
   const raw = fs.readFileSync(DATA_FILE, 'utf-8');
   const data = JSON.parse(raw) as AppData;
+  // Migration: ensure memories array exists for old data files
+  if (!data.memories) {
+    data.memories = [];
+  }
   g.__appData = data;
   return data;
 }
@@ -205,4 +210,32 @@ export function getProjectInstructions(projectId: string): string {
   const data = readData();
   const project = data.projects.find((p) => p.id === projectId);
   return project?.instructions || '';
+}
+
+// --- Memories ---
+
+export function listMemories(): Memory[] {
+  const data = readData();
+  return [...data.memories].sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export function addMemory(content: string): Memory {
+  const data = readData();
+  const memory: Memory = {
+    id: crypto.randomUUID(),
+    content,
+    createdAt: Date.now(),
+  };
+  data.memories.push(memory);
+  writeData(data);
+  return memory;
+}
+
+export function deleteMemory(id: string): boolean {
+  const data = readData();
+  const idx = data.memories.findIndex((m) => m.id === id);
+  if (idx === -1) return false;
+  data.memories.splice(idx, 1);
+  writeData(data);
+  return true;
 }

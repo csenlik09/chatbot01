@@ -5,11 +5,16 @@ const MAX_CONTEXT_CHARS = 6000;
 export function buildContextualQuery(
   currentMessage: string,
   history: Message[],
-  projectInstructions?: string
+  projectInstructions?: string,
+  memories?: string[]
 ): string {
   let prefix = '';
   if (projectInstructions && projectInstructions.trim()) {
     prefix = `[System Instructions]\n${projectInstructions.trim()}\n\n`;
+  }
+
+  if (memories && memories.length > 0) {
+    prefix += `[User Memories]\n${memories.map((m) => `- ${m}`).join('\n')}\n\n`;
   }
 
   if (history.length === 0) return `${prefix}${currentMessage}`;

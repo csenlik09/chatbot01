@@ -4,6 +4,7 @@ import {
   addMessageToConversation,
   getSettings,
   getProjectInstructions,
+  listMemories,
 } from '@/lib/dataStore';
 import { buildContextualQuery, sendChatMessage } from '@/lib/apiClient';
 import { sanitizeInput, isValidMessage } from '@/utils/sanitize';
@@ -61,7 +62,8 @@ export async function POST(request: NextRequest) {
     if (conversation.projectId) {
       projectInstructions = getProjectInstructions(conversation.projectId);
     }
-    const query = buildContextualQuery(message, priorHistory, projectInstructions);
+    const memories = listMemories().map((m) => m.content);
+    const query = buildContextualQuery(message, priorHistory, projectInstructions, memories);
     const apiResponse = await sendChatMessage(query, settings);
 
     // Store assistant response

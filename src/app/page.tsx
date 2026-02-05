@@ -4,12 +4,14 @@ import { useState, useCallback } from 'react';
 import Sidebar from '@/components/Sidebar';
 import ChatWindow from '@/components/ChatWindow';
 import SettingsPanel from '@/components/SettingsPanel';
+import MemoriesPanel from '@/components/MemoriesPanel';
 import ProjectInstructionsModal from '@/components/ProjectInstructionsModal';
 
 export default function Home() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [memoriesOpen, setMemoriesOpen] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [sidebarKey, setSidebarKey] = useState(0);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -47,6 +49,7 @@ export default function Home() {
         onSelectConversation={handleSelectConversation}
         onNewChat={handleNewChat}
         onOpenSettings={() => setSettingsOpen(true)}
+        onOpenMemories={() => setMemoriesOpen(true)}
         onOpenProjectInstructions={(id) => setEditingProjectId(id)}
         onProjectSelect={setSelectedProjectId}
       />
@@ -58,6 +61,7 @@ export default function Home() {
         onAutoCreateChat={handleCreateAndSend}
       />
       <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <MemoriesPanel isOpen={memoriesOpen} onClose={() => setMemoriesOpen(false)} />
       {editingProjectId && (
         <ProjectInstructionsModal
           projectId={editingProjectId}
