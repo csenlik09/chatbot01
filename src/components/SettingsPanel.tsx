@@ -24,26 +24,25 @@ export default function SettingsPanel({ isOpen, onClose }: Props) {
   });
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
-  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    if (isOpen && !loaded) {
+    if (isOpen) {
+      setStatus('');
       fetch('/api/settings')
         .then((res) => res.json())
         .then((data) => {
           if (data.settings) {
             setSettings({
               apiUrl: data.settings.apiUrl || '',
-              apiKey: '', // Don't populate masked key
+              apiKey: '',
               platform: data.settings.platform || '',
               userContext: data.settings.userContext || '',
             });
-            setLoaded(true);
           }
         })
         .catch(() => setStatus('Failed to load settings'));
     }
-  }, [isOpen, loaded]);
+  }, [isOpen]);
 
   async function handleSave() {
     setSaving(true);

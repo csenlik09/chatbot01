@@ -12,6 +12,8 @@
   --border: #444;
   --error: #ef4444;
   --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sidebar-width: 260px;
+  --sidebar-bg: #171717;
 }
 
 * {
@@ -23,6 +25,7 @@
 html,
 body {
   height: 100%;
+  overflow: hidden;
 }
 
 body {

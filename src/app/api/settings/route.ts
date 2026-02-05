@@ -1,41 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import {
-  getOrCreateSession,
-  getSettings,
-  updateSettings,
-} from '@/lib/sessionStore';
+import { getSettings, updateSettings } from '@/lib/dataStore';
 import type { SettingsResponse } from '@/lib/types';
-
-function setSessionCookie(response: NextResponse, sessionId: string, existingId: string | undefined) {
-  if (existingId !== sessionId) {
-    response.cookies.set('session_id', sessionId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 30 * 60,
-      path: '/',
-    });
-  }
-}
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const existingSessionId = cookieStore.get('session_id')?.value;
-    const session = getOrCreateSession(existingSessionId);
-
-    const settings = getSettings(session.id);
-
-    // Mask the API key for the frontend
+    const settings = getSettings();
     const maskedSettings = {
       ...settings,
-      apiKey: settings.apiKey ? '••••' + settings.apiKey.slice(-4) : '',
+      apiKey: settings.apiKey ? '\u2022\u2022\u2022\u2022' + settings.apiKey.slice(-4) : '',
     };
-
-    const response = NextResponse.json({ settings: maskedSettings } as SettingsResponse);
-    setSessionCookie(response, session.id, existingSessionId);
-    return response;
+    return NextResponse.json({ settings: maskedSettings } as SettingsResponse);
   } catch (error) {
     console.error('Settings GET error:', error);
     return NextResponse.json(
@@ -47,10 +21,6 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const existingSessionId = cookieStore.get('session_id')?.value;
-    const session = getOrCreateSession(existingSessionId);
-
     const body = await request.json();
     const updates: Record<string, string> = {};
 
@@ -59,17 +29,13 @@ export async function PUT(request: NextRequest) {
     if (typeof body.platform === 'string') updates.platform = body.platform.trim();
     if (typeof body.userContext === 'string') updates.userContext = body.userContext.trim();
 
-    const settings = updateSettings(session.id, updates);
-
-    // Mask the API key for the response
+    const settings = updateSettings(updates);
     const maskedSettings = {
       ...settings,
-      apiKey: settings.apiKey ? '••••' + settings.apiKey.slice(-4) : '',
+      apiKey: settings.apiKey ? '\u2022\u2022\u2022\u2022' + settings.apiKey.slice(-4) : '',
     };
 
-    const response = NextResponse.json({ settings: maskedSettings } as SettingsResponse);
-    setSessionCookie(response, session.id, existingSessionId);
-    return response;
+    return NextResponse.json({ settings: maskedSettings } as SettingsResponse);
   } catch (error) {
     console.error('Settings PUT error:', error);
     return NextResponse.json(

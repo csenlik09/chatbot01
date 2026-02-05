@@ -4,22 +4,27 @@ const MAX_CONTEXT_CHARS = 6000;
 
 export function buildContextualQuery(
   currentMessage: string,
-  history: Message[]
+  history: Message[],
+  projectInstructions?: string
 ): string {
-  if (history.length === 0) return currentMessage;
+  let prefix = '';
+  if (projectInstructions && projectInstructions.trim()) {
+    prefix = `[System Instructions]\n${projectInstructions.trim()}\n\n`;
+  }
+
+  if (history.length === 0) return `${prefix}${currentMessage}`;
 
   const lines = history.map(
     (m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
   );
 
-  // Trim oldest messages if context exceeds character budget
   let context = lines.join('\n');
   while (context.length > MAX_CONTEXT_CHARS && lines.length > 2) {
     lines.shift();
     context = lines.join('\n');
   }
 
-  return `[Conversation History]\n${context}\n\n[Current Message]\n${currentMessage}`;
+  return `${prefix}[Conversation History]\n${context}\n\n[Current Message]\n${currentMessage}`;
 }
 
 export async function sendChatMessage(

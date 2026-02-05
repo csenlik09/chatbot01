@@ -5,12 +5,21 @@ export interface Message {
   timestamp: number;
 }
 
-export interface Session {
+export interface Conversation {
   id: string;
+  projectId: string | null;
+  title: string;
   messages: Message[];
-  settings: ApiSettings;
   createdAt: number;
-  lastAccessedAt: number;
+  updatedAt: number;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  instructions: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface ApiSettings {
@@ -20,20 +29,20 @@ export interface ApiSettings {
   userContext: string;
 }
 
+export interface AppData {
+  settings: ApiSettings;
+  projects: Project[];
+  conversations: Conversation[];
+}
+
 export interface ChatRequest {
   message: string;
+  conversationId: string;
 }
 
 export interface ChatResponse {
   message: Message;
   error?: string;
-}
-
-export interface SettingsRequest {
-  apiUrl?: string;
-  apiKey?: string;
-  platform?: string;
-  userContext?: string;
 }
 
 export interface SettingsResponse {
