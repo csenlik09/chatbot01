@@ -13,7 +13,7 @@ import type { Message, ChatResponse } from '@/lib/types';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { message: rawMessage, conversationId } = body;
+    const { message: rawMessage, conversationId, image } = body;
 
     if (typeof conversationId !== 'string' || !conversationId) {
       return NextResponse.json(
@@ -22,9 +22,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (typeof rawMessage !== 'string' || !isValidMessage(rawMessage)) {
+    const hasImage = typeof image === 'string' && image.length > 0;
+
+    if (typeof rawMessage !== 'string' || (!isValidMessage(rawMessage) && !hasImage)) {
       return NextResponse.json(
         { error: 'Invalid message. Must be 1-2000 characters.' } as ChatResponse,
+        { status: 400 }
+      );
+    }
+
+    if (hasImage && image.length > 1_000_000) {
+      return NextResponse.json(
+        { error: 'Image too large. Please use a smaller image.' } as ChatResponse,
         { status: 400 }
       );
     }
@@ -52,6 +61,7 @@ export async function POST(request: NextRequest) {
       id: crypto.randomUUID(),
       role: 'user',
       content: message,
+      ...(hasImage && { image }),
       timestamp: Date.now(),
     };
     addMessageToConversation(conversationId, userMessage);
@@ -63,7 +73,10 @@ export async function POST(request: NextRequest) {
       projectInstructions = getProjectInstructions(conversation.projectId);
     }
     const memories = listMemories().map((m) => m.content);
-    const query = buildContextualQuery(message, priorHistory, projectInstructions, memories);
+    let query = buildContextualQuery(message, priorHistory, projectInstructions, memories);
+    if (hasImage) {
+      query += `\n\n[Attached Image]\n${image}`;
+    }
     const apiResponse = await sendChatMessage(query, settings);
 
     // Store assistant response

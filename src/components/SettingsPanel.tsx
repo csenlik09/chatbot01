@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from './SettingsPanel.module.css';
 
 interface Props {
@@ -24,6 +24,11 @@ export default function SettingsPanel({ isOpen, onClose }: Props) {
   });
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
+  const [backupStatus, setBackupStatus] = useState('');
+  const [restoring, setRestoring] = useState(false);
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -72,6 +77,61 @@ export default function SettingsPanel({ isOpen, onClose }: Props) {
       setStatus('Failed to save settings');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDownloadBackup() {
+    setBackupStatus('');
+    try {
+      const res = await fetch('/api/backup');
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `chatbot-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setBackupStatus('Backup downloaded');
+    } catch {
+      setBackupStatus('Failed to download backup');
+    }
+  }
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPendingFile(file);
+    setShowRestoreConfirm(true);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  async function handleConfirmRestore() {
+    if (!pendingFile) return;
+    setRestoring(true);
+    setBackupStatus('');
+    setShowRestoreConfirm(false);
+    try {
+      const text = await pendingFile.text();
+      const data = JSON.parse(text);
+      const res = await fetch('/api/backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        setBackupStatus(result.error || 'Restore failed');
+      } else {
+        setBackupStatus('Data restored. Reload the page to see changes.');
+      }
+    } catch {
+      setBackupStatus('Failed to restore: invalid JSON file');
+    } finally {
+      setRestoring(false);
+      setPendingFile(null);
     }
   }
 
@@ -155,6 +215,51 @@ export default function SettingsPanel({ isOpen, onClose }: Props) {
           >
             {saving ? 'Saving...' : 'Save Settings'}
           </button>
+
+          <div className={styles.divider} />
+          <h3 className={styles.sectionTitle}>Backup & Restore</h3>
+          <p className={styles.sectionDescription}>
+            Download a backup of all your data or restore from a previous backup.
+          </p>
+          <div className={styles.backupButtons}>
+            <button className={styles.backupButton} onClick={handleDownloadBackup}>
+              Download Backup
+            </button>
+            <button
+              className={styles.backupButton}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={restoring}
+            >
+              {restoring ? 'Restoring...' : 'Restore from Backup'}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleFileSelect}
+              style={{ display: 'none' }}
+            />
+          </div>
+
+          {showRestoreConfirm && (
+            <div className={styles.confirmBox}>
+              <p>This will replace ALL your current data (settings, conversations, projects, memories). This cannot be undone.</p>
+              <div className={styles.confirmActions}>
+                <button className={styles.confirmButton} onClick={handleConfirmRestore}>
+                  Yes, Restore
+                </button>
+                <button className={styles.cancelButton} onClick={() => { setShowRestoreConfirm(false); setPendingFile(null); }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {backupStatus && (
+            <div className={`${styles.status} ${backupStatus.includes('Failed') || backupStatus.includes('invalid') ? styles.error : styles.success}`}>
+              {backupStatus}
+            </div>
+          )}
         </div>
       </div>
     </div>

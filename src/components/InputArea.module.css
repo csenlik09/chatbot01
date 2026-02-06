@@ -9,8 +9,7 @@
   background: var(--bg-secondary);
   border-radius: 24px;
   padding: 8px 8px 8px 16px;
-  max-width: 800px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .textarea {
@@ -57,4 +56,70 @@
 .sendButton:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.attachButton {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.attachButton:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+.attachButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.previewContainer {
+  padding: 0 16px 4px;
+  width: 100%;
+}
+
+.previewWrapper {
+  display: inline-block;
+  position: relative;
+}
+
+.previewImage {
+  max-height: 120px;
+  max-width: 200px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.removeImage {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: background 0.15s;
+}
+
+.removeImage:hover {
+  background: var(--error);
+  color: white;
+  border-color: var(--error);
 }

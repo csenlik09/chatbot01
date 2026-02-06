@@ -49,7 +49,7 @@ export default function ChatWindow({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  async function handleSend(text: string) {
+  async function handleSend(text: string, imageBase64?: string) {
     let convId = activeConvRef.current;
 
     // Auto-create conversation if none exists
@@ -66,6 +66,7 @@ export default function ChatWindow({
       id: crypto.randomUUID(),
       role: 'user',
       content: text,
+      ...(imageBase64 && { image: imageBase64 }),
       timestamp: Date.now(),
     };
     setMessages((prev) => [...prev, userMessage]);
@@ -75,7 +76,7 @@ export default function ChatWindow({
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, conversationId: convId }),
+        body: JSON.stringify({ message: text, conversationId: convId, ...(imageBase64 && { image: imageBase64 }) }),
       });
       const data: ChatResponse = await res.json();
 

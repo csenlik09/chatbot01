@@ -115,3 +115,99 @@
   color: var(--error);
   background: rgba(239, 68, 68, 0.1);
 }
+
+.divider {
+  border-top: 1px solid var(--border);
+  margin: 8px 0;
+}
+
+.sectionTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.sectionDescription {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.backupButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.backupButton {
+  flex: 1;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.backupButton:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  border-color: var(--text-muted);
+}
+
+.backupButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.confirmBox {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid var(--error);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.confirmBox p {
+  font-size: 0.82rem;
+  color: var(--error);
+  line-height: 1.4;
+  margin: 0 0 10px 0;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 8px;
+}
+
+.confirmButton {
+  background: var(--error);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.confirmButton:hover {
+  opacity: 0.85;
+}
+
+.cancelButton {
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cancelButton:hover {
+  background: var(--bg-secondary);
+}

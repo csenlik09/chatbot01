@@ -10,7 +10,16 @@ export default function MessageBubble({ message }: Props) {
 
   return (
     <div className={`${styles.bubble} ${isUser ? styles.user : styles.assistant}`}>
-      <div className={styles.content}>{message.content}</div>
+      {message.image && (
+        <img
+          src={message.image}
+          alt="Attached image"
+          className={styles.messageImage}
+        />
+      )}
+      {message.content && (
+        <div className={styles.content}>{message.content}</div>
+      )}
     </div>
   );
 }

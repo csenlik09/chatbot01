@@ -239,3 +239,26 @@ export function deleteMemory(id: string): boolean {
   writeData(data);
   return true;
 }
+
+// --- Backup / Restore ---
+
+export function exportAllData(): AppData {
+  return readData();
+}
+
+export function importAllData(data: AppData): void {
+  if (!data || typeof data !== 'object') throw new Error('Invalid data format');
+  if (!data.settings || typeof data.settings !== 'object') throw new Error('Missing settings');
+  if (!Array.isArray(data.projects)) throw new Error('Missing projects array');
+  if (!Array.isArray(data.conversations)) throw new Error('Missing conversations array');
+  if (!Array.isArray(data.memories)) data.memories = [];
+
+  const requiredKeys: (keyof ApiSettings)[] = ['apiUrl', 'apiKey', 'platform', 'userContext'];
+  for (const key of requiredKeys) {
+    if (typeof data.settings[key] !== 'string') {
+      throw new Error(`Invalid settings.${key}`);
+    }
+  }
+
+  writeData(data);
+}
